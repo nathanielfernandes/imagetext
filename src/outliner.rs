@@ -1,6 +1,6 @@
 use tiny_skia::PathBuilder;
 
-use crate::{measure::text_size, superfont::SuperFont, wrap::word_wrap};
+use crate::{measure::text_size, superfont::SuperFont};
 
 #[derive(Debug, Clone, Copy)]
 pub enum TextAlign {
@@ -95,34 +95,6 @@ impl<'a> TextDrawer<'a> {
             self.draw_text_anchored(line, x, y, ax, 0.0, font, scale);
             y += scale.y * line_spacing;
         }
-    }
-
-    pub fn draw_text_wrapped(
-        &mut self,
-        text: &str,
-        x: f32,
-        y: f32,
-        ax: f32,
-        ay: f32,
-        width: f32,
-        font: &SuperFont,
-        scale: rusttype::Scale,
-        line_spacing: f32,
-        align: TextAlign,
-    ) {
-        let lines = word_wrap(text, width as i32, font, scale);
-        self.draw_text_multiline(
-            &lines,
-            x,
-            y,
-            ax,
-            ay,
-            width,
-            font,
-            scale,
-            line_spacing,
-            align,
-        );
     }
 }
 
