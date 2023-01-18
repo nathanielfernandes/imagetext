@@ -9,4 +9,7 @@ pub mod prelude {
 
     pub use crate::outliner::TextAlign;
     pub use crate::superfont::{SuperFont, SuperLayoutIter};
+
+    pub use rusttype::{Font, Scale};
+    pub use tiny_skia::{Color, Paint, Pixmap};
 }
