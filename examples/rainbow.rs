@@ -1,4 +1,4 @@
-use typerighter::drawing::prelude::*;
+use imagetext::prelude::*;
 
 fn main() {
     // replace this with your own font

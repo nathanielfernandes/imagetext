@@ -6,7 +6,7 @@ use crate::{
     wrap::word_wrap,
 };
 
-use super::{prelude::BLACK, utils::pixmap_mut};
+use super::{paint::BLACK, utils::pixmap_mut};
 
 pub fn draw_text_mut(
     image: &mut image::RgbaImage,
