@@ -16,18 +16,11 @@ pub fn word_wrap(text: &str, width: i32, font: &SuperFont, scale: rusttype::Scal
             let w = text_size(scale, font, &new_line).0;
 
             if w > width {
-                if line.is_empty() {
-                    // word is too long to fit on a line by itself
-                    // just add it to the line
-                    line.push_str(word);
-                } else {
-                    // word is too long to fit on a line by itself
-                    // add the line to the result and start a new line
+                if !line.is_empty() {
                     result.push(line);
-                    line = String::new();
                 }
+                line = word.to_string();
             } else {
-                // word fits on the line
                 line = new_line;
             }
         }

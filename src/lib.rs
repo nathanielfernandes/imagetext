@@ -15,3 +15,6 @@ pub mod prelude {
     pub use rusttype::{Font, Scale};
     pub use tiny_skia::{Color, GradientStop, LinearGradient, Paint, Pixmap, RadialGradient};
 }
+
+#[cfg(feature = "emoji")]
+pub mod emoji;

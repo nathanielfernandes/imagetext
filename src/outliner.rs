@@ -9,16 +9,29 @@ pub enum TextAlign {
     Right,
 }
 
+#[cfg(feature = "emoji")]
+#[derive(Debug, Clone, Copy)]
+pub struct PositionEmoji {
+    pub position: (i64, i64),
+    pub size: u32,
+    pub emoji: &'static emojis::Emoji,
+}
+
 pub struct TextDrawer<'a> {
     pub pb: &'a mut PathBuilder,
     offset: rusttype::Point<f32>,
-}
 
+    #[cfg(feature = "emoji")]
+    emojis: Vec<PositionEmoji>,
+}
 impl<'a> TextDrawer<'a> {
     pub fn new(pb: &'a mut PathBuilder) -> Self {
         Self {
             pb,
             offset: rusttype::Point { x: 0.0, y: 0.0 },
+
+            #[cfg(feature = "emoji")]
+            emojis: Vec::new(),
         }
     }
 
@@ -28,6 +41,7 @@ impl<'a> TextDrawer<'a> {
         glyph.unpositioned().build_outline(self);
     }
 
+    #[cfg(not(feature = "emoji"))]
     pub fn draw_text(
         &mut self,
         text: &str,
@@ -40,6 +54,51 @@ impl<'a> TextDrawer<'a> {
         for g in font.layout(text, scale, rusttype::point(x, y + v_metrics.ascent)) {
             if let Some(_) = g.pixel_bounding_box() {
                 self.draw_glyph(&g);
+            }
+        }
+    }
+
+    #[cfg(feature = "emoji")]
+    pub fn emojis(self) -> Vec<PositionEmoji> {
+        self.emojis
+    }
+
+    #[cfg(feature = "emoji")]
+    pub fn draw_text(
+        &mut self,
+        text: &str,
+        x: f32,
+        y: f32,
+        font: &SuperFont,
+        scale: rusttype::Scale,
+    ) {
+        let (text, emojis) = crate::emoji::parse_out_emojis(text);
+
+        let v_metrics = font.inner.v_metrics(scale);
+        for (g, emoji) in font.layout(
+            &text,
+            &emojis,
+            scale,
+            rusttype::point(x, y + v_metrics.ascent),
+        ) {
+            if let Some(bb) = g.pixel_bounding_box() {
+                match emoji {
+                    Some(emoji) => {
+                        let w = bb.width() as i64;
+
+                        let position = (bb.min.x as i64 + (w / 2), bb.min.y as i64 + (w / 2));
+                        let position = (position.0 - (w / 2), position.1 - (w / 2));
+
+                        self.emojis.push(PositionEmoji {
+                            position,
+                            size: w as u32,
+                            emoji,
+                        });
+                    }
+                    None => {
+                        self.draw_glyph(&g);
+                    }
+                }
             }
         }
     }
