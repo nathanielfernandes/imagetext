@@ -1,6 +1,9 @@
 pub struct SuperFont<'a, 'f> {
     pub inner: &'a rusttype::Font<'f>,
     pub fallbacks: &'a [rusttype::Font<'f>],
+
+    #[cfg(feature = "emoji")]
+    pub emoji_options: crate::emoji::EmojiOptions,
 }
 
 impl<'a, 'f> SuperFont<'a, 'f> {
@@ -11,6 +14,21 @@ impl<'a, 'f> SuperFont<'a, 'f> {
         Self {
             inner: font,
             fallbacks,
+            #[cfg(feature = "emoji")]
+            emoji_options: crate::emoji::EmojiOptions::default(),
+        }
+    }
+
+    #[cfg(feature = "emoji")]
+    pub fn with_emoji_options(
+        font: &'a rusttype::Font<'f>,
+        fallbacks: &'a [rusttype::Font<'f>],
+        emoji_options: crate::emoji::EmojiOptions,
+    ) -> SuperFont<'a, 'f> {
+        Self {
+            inner: font,
+            fallbacks,
+            emoji_options,
         }
     }
 }
@@ -84,8 +102,9 @@ pub struct SuperEmojiLayoutIter<'a, 'font, 's> {
     font: &'a rusttype::Font<'font>,
     fallbacks: &'a [rusttype::Font<'font>],
     chars: core::str::Chars<'s>,
-    emojis: &'s [&'static emojis::Emoji],
+    emojis: &'s [crate::emoji::source::EmojiType],
     emoji_index: usize,
+    emoji_scale: rusttype::Scale,
     caret: f32,
     scale: rusttype::Scale,
     start: rusttype::Point<f32>,
@@ -96,7 +115,7 @@ pub struct SuperEmojiLayoutIter<'a, 'font, 's> {
 impl<'a, 'font, 's> Iterator for SuperEmojiLayoutIter<'a, 'font, 's> {
     type Item = (
         rusttype::PositionedGlyph<'font>,
-        Option<&'static emojis::Emoji>,
+        Option<&'s crate::emoji::source::EmojiType>,
     );
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -130,10 +149,10 @@ impl<'a, 'font, 's> Iterator for SuperEmojiLayoutIter<'a, 'font, 's> {
                 }
 
                 // If we get here, we didn't find a fallback font that had the glyph.
-                if c == crate::emoji::PLACEHOLDER {
+                if c == crate::emoji::parse::PLACEHOLDER {
                     if let Some(emoji) = self.emojis.get(self.emoji_index) {
-                        let g = crate::emoji::EMOJI_FONT.glyph(crate::emoji::PLACEHOLDER);
-                        let g = g.scaled(self.scale);
+                        let g = crate::emoji::EMOJI_FONT.glyph(crate::emoji::parse::PLACEHOLDER);
+                        let g = g.scaled(self.emoji_scale);
                         let id = g.id();
 
                         if let Some(last) = self.last_glyph {
@@ -151,7 +170,7 @@ impl<'a, 'font, 's> Iterator for SuperEmojiLayoutIter<'a, 'font, 's> {
 
                         self.emoji_index += 1;
 
-                        return (g, Some(*emoji));
+                        return (g, Some(emoji));
                     }
                 }
             }
@@ -175,7 +194,6 @@ impl<'a, 'font, 's> Iterator for SuperEmojiLayoutIter<'a, 'font, 's> {
 }
 
 impl<'superfont, 'f> SuperFont<'superfont, 'f> {
-    #[cfg(not(feature = "emoji"))]
     pub fn layout<'a, 's>(
         &'a self,
         text: &'s str,
@@ -194,10 +212,11 @@ impl<'superfont, 'f> SuperFont<'superfont, 'f> {
     }
 
     #[cfg(feature = "emoji")]
-    pub fn layout<'a, 's>(
+    pub fn layout_with_emojis<'a, 's>(
         &'a self,
         text: &'s str,
-        emojis: &'s [&'static emojis::Emoji],
+        emojis: &'s [crate::emoji::source::EmojiType],
+        emoji_scale: f32,
         scale: rusttype::Scale,
         start: rusttype::Point<f32>,
     ) -> SuperEmojiLayoutIter<'a, 'superfont, 's> {
@@ -207,58 +226,14 @@ impl<'superfont, 'f> SuperFont<'superfont, 'f> {
             chars: text.chars(),
             emojis,
             emoji_index: 0,
+            emoji_scale: rusttype::Scale {
+                x: scale.x * emoji_scale,
+                y: scale.y * emoji_scale,
+            },
             caret: 0.0,
             scale,
             start,
             last_glyph: None,
         }
     }
-}
-
-#[test]
-fn soup() {
-    use crate::{measure::text_size_multiline, prelude::*, wrap::word_wrap};
-
-    // crate::emoji::load_static();
-
-    let start = std::time::Instant::now();
-
-    let coolvetica = load_font("./src/bin/coolvetica.ttf").unwrap();
-    let emoji_fallback = load_font("./src/bin/notob.ttf").unwrap();
-    let jp_fallback = load_font("./src/bin/notojp.otf").unwrap();
-
-    let fallbacks = [jp_fallback];
-    let font = SuperFont::new(&coolvetica, &fallbacks);
-
-    let mut image = image::RgbaImage::from_pixel(512, 512, image::Rgba([255, 255, 255, 255]));
-
-    let rainbow_fill = rainbow(point(0.0, 0.0), point(256.0, 256.0));
-
-    let text = "😀 😃 😄 😁 😆 😅 😂 🤣 🥲 🥹 ☺️ 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🥸 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😮‍💨 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🫣 🤗 🫡 🤔 🫢 🤭 🤫 🤥 😶 😶‍🌫️ 😐 😑 😬 🫠 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 😵‍💫 🫥 🤐 🥴 🤢 🤮 🤧 😷 🤒 🤕 🤑 🤠 😈 👿 👹 👺 🤡 💩 👻 💀 ☠️ 👽 👾 🤖 🎃 😺 😸 😹 😻 😼 😽 🙀 😿 😾 👋 🤚 🖐 ✋ 🖖 👌 🤌 🤏 ✌️ 🤞 🫰 🤟 🤘 🤙 🫵 🫱 🫲 🫳 🫴 👈 👉 👆 🖕 👇 ☝️ 👍 👎 ✊ 👊 🤛 🤜 👏 🫶 🙌 👐 🤲 🤝 🙏 ✍️ 💅 🤳 💪 🦾 🦵 🦿 🦶 👣 👂 🦻 👃 🫀 🫁 🧠 🦷 🦴 👀 👁 👅 👄 🫦 💋 🩸 🧳 🌂 ☂️ 🧵 🪡 🪢 🧶 👓 🕶 🥽 🥼 🦺 👔 👕 👖 🧣 🧤 🧥 🧦 👗 👘 🥻 🩴 🩱 🩲 🩳 👙 👚 👛 👜 👝 🎒 👞 👟 🥾 🥿 👠 👡 🩰 👢 👑 👒 🎩 🎓 🧢 ⛑ 🪖 💄 💍 💼";
-
-    // let lines = word_wrap(text, 512, &font, scale(67.0));
-    // let (w, h) = text_size_multiline(&lines, &font, scale(67.0), 1.0);
-    // println!("{}x{}", w, h);
-
-    draw_text_wrapped(
-        &mut image,
-        &BLACK,
-        Some(&stroke(2.0)),
-        Some(&rainbow_fill),
-        256.0,
-        256.0,
-        0.5,
-        0.5,
-        512.0,
-        scale(25.0),
-        &font,
-        text,
-        1.0,
-        TextAlign::Left,
-    )
-    .unwrap();
-
-    println!("Took {}ms", start.elapsed().as_millis());
-
-    image.save("./src/bin/image.png").unwrap();
 }
