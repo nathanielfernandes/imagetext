@@ -14,6 +14,7 @@ pub(crate) static EMOJI_FONT: Lazy<rusttype::Font<'static>> = Lazy::new(|| {
     rusttype::Font::try_from_bytes(font_data as &[u8]).expect("Failed to load emoji font")
 });
 
+#[derive(Debug, Clone)]
 pub struct EmojiOptions {
     pub scale: f32,
     pub shift: (i64, i64),
