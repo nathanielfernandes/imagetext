@@ -71,35 +71,21 @@ impl DefaultEmojiResolver {
                     },
                 }
             }
-            EmojiPath::External(path) => match EXTERNAL_CACHE.get(path) {
-                Some(found) => match found {
-                    Some(image) => Some(resize(&image, size)),
-                    None => None,
-                },
-                None => match CLIENT.get(path).send() {
+            EmojiPath::External(path) => {
+                EXTERNAL_CACHE.get_with_by_ref(path, || match CLIENT.get(path).send() {
                     Ok(response) => match response.bytes() {
                         Ok(bytes) => match image::load_from_memory(&bytes) {
                             Ok(image) => {
                                 let image = image.to_rgba8();
-                                EXTERNAL_CACHE.insert(path.to_string(), Some(image.clone()));
                                 Some(resize(&image, size))
                             }
-                            Err(_) => {
-                                EXTERNAL_CACHE.insert(path.to_string(), None);
-                                None
-                            }
+                            Err(_) => None,
                         },
-                        Err(_) => {
-                            EXTERNAL_CACHE.insert(path.to_string(), None);
-                            None
-                        }
+                        Err(_) => None,
                     },
-                    Err(_) => {
-                        EXTERNAL_CACHE.insert(path.to_string(), None);
-                        None
-                    }
-                },
-            },
+                    Err(_) => None,
+                })
+            }
             EmojiPath::None => None,
         }
     }
