@@ -13,9 +13,9 @@ pub enum EmojiPath {
     None,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum EmojiSource {
-    Dir(String), // Path to directory
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum EmojiSource<'a> {
+    Dir(&'a str), // Path to directory
 
     Twitter,
     Apple,
@@ -35,7 +35,7 @@ pub enum EmojiSource {
     Twemoji,
 }
 
-impl EmojiSource {
+impl EmojiSource<'_> {
     const EMOJI_CDN: &'static str = "https://emojicdn.elk.sh";
     const DISCORD_EMOJI_CDN: &'static str = "https://cdn.discordapp.com/emojis";
 
@@ -122,7 +122,7 @@ pub trait EmojiResolver {
 
 #[test]
 pub fn emoji_src() {
-    let src = EmojiSource::Dir("test".to_string());
+    let src = EmojiSource::Dir("test");
     let emoji = EmojiType::Regular(emojis::get("😀").unwrap());
     assert_eq!(
         src.build_path(&emoji, false),

@@ -1,33 +1,40 @@
-pub struct SuperFont<'a, 'f> {
-    pub inner: &'a rusttype::Font<'f>,
-    pub fallbacks: &'a [rusttype::Font<'f>],
+use std::sync::Arc;
+
+pub struct SuperFont<'f> {
+    pub(crate) main: rusttype::Font<'f>,
+    pub(crate) fallbacks: Arc<Vec<rusttype::Font<'f>>>,
 
     #[cfg(feature = "emoji")]
-    pub emoji_options: crate::emoji::EmojiOptions,
+    pub emoji_options: crate::emoji::EmojiOptions<'f>,
 }
 
-impl<'a, 'f> SuperFont<'a, 'f> {
-    pub fn new(
-        font: &'a rusttype::Font<'f>,
-        fallbacks: &'a [rusttype::Font<'f>],
-    ) -> SuperFont<'a, 'f> {
+impl<'f> SuperFont<'f> {
+    pub fn new(font: rusttype::Font<'f>, fallbacks: Vec<rusttype::Font<'f>>) -> SuperFont<'f> {
         Self {
-            inner: font,
-            fallbacks,
+            main: font,
+            fallbacks: Arc::new(fallbacks),
             #[cfg(feature = "emoji")]
             emoji_options: crate::emoji::EmojiOptions::default(),
         }
     }
 
+    pub fn main(&self) -> &rusttype::Font<'f> {
+        &self.main
+    }
+
+    pub fn fallbacks(&self) -> &[rusttype::Font<'f>] {
+        &self.fallbacks
+    }
+
     #[cfg(feature = "emoji")]
     pub fn with_emoji_options(
-        font: &'a rusttype::Font<'f>,
-        fallbacks: &'a [rusttype::Font<'f>],
-        emoji_options: crate::emoji::EmojiOptions,
-    ) -> SuperFont<'a, 'f> {
+        font: rusttype::Font<'f>,
+        fallbacks: Vec<rusttype::Font<'f>>,
+        emoji_options: crate::emoji::EmojiOptions<'f>,
+    ) -> SuperFont<'f> {
         Self {
-            inner: font,
-            fallbacks,
+            main: font,
+            fallbacks: Arc::new(fallbacks),
             emoji_options,
         }
     }
@@ -193,16 +200,16 @@ impl<'a, 'font, 's> Iterator for SuperEmojiLayoutIter<'a, 'font, 's> {
     }
 }
 
-impl<'superfont, 'f> SuperFont<'superfont, 'f> {
+impl<'f> SuperFont<'f> {
     pub fn layout<'a, 's>(
         &'a self,
         text: &'s str,
         scale: rusttype::Scale,
         start: rusttype::Point<f32>,
-    ) -> SuperLayoutIter<'a, 'superfont, 's> {
+    ) -> SuperLayoutIter<'a, 'f, 's> {
         SuperLayoutIter {
-            font: self.inner,
-            fallbacks: self.fallbacks,
+            font: &self.main,
+            fallbacks: &self.fallbacks,
             chars: text.chars(),
             caret: 0.0,
             scale,
@@ -219,10 +226,10 @@ impl<'superfont, 'f> SuperFont<'superfont, 'f> {
         emoji_scale: f32,
         scale: rusttype::Scale,
         start: rusttype::Point<f32>,
-    ) -> SuperEmojiLayoutIter<'a, 'superfont, 's> {
+    ) -> SuperEmojiLayoutIter<'a, 'f, 's> {
         SuperEmojiLayoutIter {
-            font: self.inner,
-            fallbacks: self.fallbacks,
+            font: &self.main,
+            fallbacks: &self.fallbacks,
             chars: text.chars(),
             emojis,
             emoji_index: 0,

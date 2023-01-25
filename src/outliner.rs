@@ -54,7 +54,7 @@ impl<'a> TextDrawer<'a> {
         font: &SuperFont,
         scale: rusttype::Scale,
     ) {
-        let v_metrics = font.inner.v_metrics(scale);
+        let v_metrics = font.main.v_metrics(scale);
         for g in font.layout(text, scale, rusttype::point(x, y + v_metrics.ascent)) {
             if let Some(_) = g.pixel_bounding_box() {
                 self.draw_glyph(&g);
@@ -135,7 +135,7 @@ impl<'a> TextDrawer<'a> {
             font.emoji_options.allow_discord,
         );
 
-        let v_metrics = font.inner.v_metrics(scale);
+        let v_metrics = font.main.v_metrics(scale);
         for (g, emoji) in font.layout_with_emojis(
             &text,
             &emojis,

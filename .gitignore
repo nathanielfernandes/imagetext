@@ -1,3 +1,5 @@
 /target
 /src/bin
 /src/assets/twemojis*
+/examples/*.*tf
+/examples/*.png
