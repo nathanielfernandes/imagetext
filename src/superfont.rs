@@ -5,7 +5,7 @@ pub struct SuperFont<'f> {
     pub(crate) fallbacks: Arc<Vec<rusttype::Font<'f>>>,
 
     #[cfg(feature = "emoji")]
-    pub emoji_options: crate::emoji::EmojiOptions<'f>,
+    pub emoji_options: crate::emoji::EmojiOptions,
 }
 
 impl<'f> SuperFont<'f> {
@@ -30,7 +30,7 @@ impl<'f> SuperFont<'f> {
     pub fn with_emoji_options(
         font: rusttype::Font<'f>,
         fallbacks: Vec<rusttype::Font<'f>>,
-        emoji_options: crate::emoji::EmojiOptions<'f>,
+        emoji_options: crate::emoji::EmojiOptions,
     ) -> SuperFont<'f> {
         Self {
             main: font,

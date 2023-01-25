@@ -143,7 +143,10 @@ impl FontDB {
                 return Some(SuperFont::with_emoji_options(
                     fonts.next()?.clone(),
                     fonts.map(|f| f.clone()).collect::<Vec<Font<'static>>>(),
-                    *DEFAULT_EMOJI_OPTIONS.read().unwrap(),
+                    DEFAULT_EMOJI_OPTIONS
+                        .read()
+                        .expect("Failed to read emoji options")
+                        .clone(),
                 ));
             }
             Err(_) => None,
@@ -167,7 +170,7 @@ impl FontDB {
     #[cfg(feature = "emoji")]
     pub fn superfont_with_emoji<'a>(
         font_names: &[&str],
-        emoji_options: crate::prelude::EmojiOptions<'a>,
+        emoji_options: crate::prelude::EmojiOptions,
     ) -> Option<SuperFont<'a>> {
         match FONT_DB.read() {
             Ok(db) => {
@@ -186,7 +189,7 @@ impl FontDB {
     #[cfg(feature = "emoji")]
     pub fn query_with_emoji<'a>(
         query: &str,
-        emoji_options: crate::prelude::EmojiOptions<'a>,
+        emoji_options: crate::prelude::EmojiOptions,
     ) -> Option<SuperFont<'a>> {
         Self::superfont_with_emoji(
             &query.split_whitespace().collect::<Vec<&str>>(),
@@ -195,7 +198,7 @@ impl FontDB {
     }
 
     #[cfg(feature = "emoji")]
-    pub fn set_default_emoji_options(emoji_options: crate::prelude::EmojiOptions<'static>) {
+    pub fn set_default_emoji_options(emoji_options: crate::prelude::EmojiOptions) {
         match DEFAULT_EMOJI_OPTIONS.write() {
             Ok(mut options) => *options = emoji_options,
             Err(_) => {}

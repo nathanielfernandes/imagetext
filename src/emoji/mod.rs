@@ -14,17 +14,17 @@ pub(crate) static EMOJI_FONT: Lazy<rusttype::Font<'static>> = Lazy::new(|| {
     rusttype::Font::try_from_bytes(font_data as &[u8]).expect("Failed to load emoji font")
 });
 
-#[derive(Debug, Clone, Copy)]
-pub struct EmojiOptions<'a> {
+#[derive(Debug, Clone)]
+pub struct EmojiOptions {
     pub scale: f32,
     pub shift: (i64, i64),
 
     pub allow_shortcodes: bool,
     pub allow_discord: bool,
-    pub source: EmojiSource<'a>,
+    pub source: EmojiSource,
 }
 
-impl Default for EmojiOptions<'_> {
+impl Default for EmojiOptions {
     fn default() -> Self {
         Self {
             scale: 1.0,
@@ -37,7 +37,7 @@ impl Default for EmojiOptions<'_> {
     }
 }
 
-impl EmojiOptions<'_> {
+impl EmojiOptions {
     pub fn discord() -> Self {
         Self {
             allow_discord: true,
@@ -50,15 +50,15 @@ impl EmojiOptions<'_> {
     }
 }
 
-impl<'a> EmojiOptions<'a> {
-    pub fn from_source(source: EmojiSource<'a>) -> EmojiOptions<'a> {
+impl EmojiOptions {
+    pub fn from_source(source: EmojiSource) -> EmojiOptions {
         Self {
             source,
             ..Default::default()
         }
     }
 
-    pub fn dir(dir: &'a str) -> EmojiOptions<'a> {
-        Self::from_source(EmojiSource::Dir(dir))
+    pub fn dir<S: Into<String>>(dir: S) -> EmojiOptions {
+        Self::from_source(EmojiSource::Dir(dir.into()))
     }
 }
