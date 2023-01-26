@@ -146,13 +146,15 @@ impl<'a> TextDrawer<'a> {
             if let Some(bb) = g.pixel_bounding_box() {
                 match emoji {
                     Some(emoji) => {
-                        let w = bb.width() as i64;
-                        let position = (bb.min.x as i64 + (w / 2), bb.min.y as i64 + (w / 2));
+                        let w = bb.width();
+                        let w2 = (w as f32 / 2.0).round() as i32;
+
+                        let position = (bb.min.x + w2, bb.min.y + w2);
 
                         self.emojis.push(PositionedEmoji {
                             position: (
-                                position.0 + font.emoji_options.shift.0,
-                                position.1 + font.emoji_options.shift.1,
+                                position.0 as i64 + font.emoji_options.shift.0,
+                                position.1 as i64 + font.emoji_options.shift.1,
                             ),
                             size: w as u32,
                             emoji: *emoji,
