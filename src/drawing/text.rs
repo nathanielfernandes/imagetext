@@ -1,9 +1,11 @@
 use tiny_skia::*;
 
 use crate::{
+    measure::text_size,
     outliner::{TextAlign, TextDrawer},
+    prelude::WrapStyle,
     superfont::SuperFont,
-    wrap::word_wrap,
+    wrap::text_wrap,
 };
 
 use super::{paint::BLACK, utils::pixmap_mut};
@@ -161,6 +163,7 @@ pub fn draw_text_wrapped(
     text: &str,
     line_spacing: f32,
     align: TextAlign,
+    wrap_style: WrapStyle,
 ) -> Result<(), String> {
     match pixmap_mut(image) {
         Some(mut pixmap) => {
@@ -168,7 +171,7 @@ pub fn draw_text_wrapped(
                 let mut pb = PathBuilder::new();
                 let mut td = TextDrawer::new(&mut pb);
 
-                let lines = word_wrap(text, width as i32, font, scale);
+                let lines = text_wrap(text, width as i32, font, scale, wrap_style, text_size);
                 td.draw_text_multiline(
                     &lines,
                     x,
@@ -420,13 +423,23 @@ pub fn draw_text_wrapped_with_emojis<R: EmojiResolver>(
     text: &str,
     line_spacing: f32,
     align: TextAlign,
+    wrap_style: WrapStyle,
 ) -> Result<(), String> {
+    use crate::measure::text_size_with_emojis;
+
     match pixmap_mut(image) {
         Some(mut pixmap) => {
             let mut pb = PathBuilder::new();
             let mut td = TextDrawer::new(&mut pb);
 
-            let lines = crate::wrap::word_wrap_with_emojis(text, width as i32, font, scale);
+            let lines = text_wrap(
+                text,
+                width as i32,
+                font,
+                scale,
+                wrap_style,
+                text_size_with_emojis,
+            );
             td.draw_text_multiline_with_emojis(
                 &lines,
                 x,

@@ -9,7 +9,7 @@ pub enum EmojiType {
 #[derive(Debug, Clone, PartialEq)]
 pub enum EmojiPath {
     Local(String),
-    External(String),
+    External { path: String, discord: bool },
     None,
 }
 
@@ -77,7 +77,7 @@ impl EmojiSource {
             EmojiSource::Lg => "lg",
             EmojiSource::Htc => "htc",
 
-            EmojiSource::Dir(_) => "",
+            EmojiSource::Dir(_) => "local",
         }
     }
 
@@ -87,16 +87,17 @@ impl EmojiSource {
                 EmojiSource::Dir(path) => {
                     EmojiPath::Local(format!("{}/{}", path, Self::emoji_file_name(e.as_str())))
                 }
-                _ => EmojiPath::External(format!(
-                    "{}/{}?style={}",
-                    Self::EMOJI_CDN,
-                    e.as_str(),
-                    self.style(),
-                )),
+                _ => EmojiPath::External {
+                    path: format!("{}/{}?style={}", Self::EMOJI_CDN, e.as_str(), self.style()),
+                    discord: false,
+                },
             },
             EmojiType::Discord(id) => {
                 if discord {
-                    EmojiPath::External(format!("{}/{}.png", Self::DISCORD_EMOJI_CDN, id))
+                    EmojiPath::External {
+                        path: format!("{}/{}.png", Self::DISCORD_EMOJI_CDN, id),
+                        discord: true,
+                    }
                 } else {
                     EmojiPath::None
                 }
@@ -133,20 +134,29 @@ pub fn emoji_src() {
     let emoji = EmojiType::Discord(1234567890);
     assert_eq!(
         src.build_path(&emoji, true),
-        EmojiPath::External("https://cdn.discordapp.com/emojis/1234567890.png".to_string())
+        EmojiPath::External {
+            path: "https://cdn.discordapp.com/emojis/1234567890.png".to_string(),
+            discord: true
+        }
     );
 
     let emoji = EmojiType::Regular(emojis::get("😀").unwrap());
     assert_eq!(
         src.build_path(&emoji, false),
-        EmojiPath::External("https://emojicdn.elk.sh/😀?style=twitter".to_string())
+        EmojiPath::External {
+            path: "https://emojicdn.elk.sh/😀?style=twemoji".to_string(),
+            discord: false
+        }
     );
 
     let src = EmojiSource::Twitter;
     let emoji = EmojiType::Regular(emojis::get("😀").unwrap());
     assert_eq!(
         src.build_path(&emoji, false),
-        EmojiPath::External("https://emojicdn.elk.sh/😀?style=twitter".to_string())
+        EmojiPath::External {
+            path: "https://emojicdn.elk.sh/😀?style=twitter".to_string(),
+            discord: false
+        }
     );
 
     let emoji = EmojiType::Discord(1234567890);

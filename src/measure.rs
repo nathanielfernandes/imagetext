@@ -36,8 +36,8 @@ pub fn text_size_with_emojis(scale: rusttype::Scale, font: &SuperFont, text: &st
     let (mut w, mut h) = (0, 0);
     let (text, emojis) = crate::emoji::parse::parse_out_emojis(
         text,
-        font.emoji_options.allow_shortcodes,
-        font.emoji_options.allow_discord,
+        font.emoji_options.parse_shortcodes,
+        font.emoji_options.parse_discord_emojis,
     );
 
     for g in font.layout_with_emojis(

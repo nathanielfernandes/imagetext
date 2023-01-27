@@ -19,8 +19,8 @@ pub struct EmojiOptions {
     pub scale: f32,
     pub shift: (i64, i64),
 
-    pub allow_shortcodes: bool,
-    pub allow_discord: bool,
+    pub parse_shortcodes: bool,
+    pub parse_discord_emojis: bool,
     pub source: EmojiSource,
 }
 
@@ -30,8 +30,8 @@ impl Default for EmojiOptions {
             scale: 1.0,
             shift: (0, 0),
 
-            allow_shortcodes: true,
-            allow_discord: false,
+            parse_shortcodes: true,
+            parse_discord_emojis: false,
             source: EmojiSource::Twitter,
         }
     }
@@ -40,13 +40,13 @@ impl Default for EmojiOptions {
 impl EmojiOptions {
     pub fn discord() -> Self {
         Self {
-            allow_discord: true,
+            parse_discord_emojis: true,
             ..Self::default()
         }
     }
 
     pub fn path_for(&self, emoji: &EmojiType) -> EmojiPath {
-        self.source.build_path(emoji, self.allow_discord)
+        self.source.build_path(emoji, self.parse_discord_emojis)
     }
 }
 

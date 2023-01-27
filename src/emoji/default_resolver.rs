@@ -14,11 +14,11 @@ static LOCAL_CACHE: Lazy<RwLock<FxHashMap<String, Option<image::RgbaImage>>>> =
     Lazy::new(|| RwLock::new(FxHashMap::default()));
 static EXTERNAL_CACHE: Lazy<Cache<String, Option<image::RgbaImage>>> = Lazy::new(|| {
     Cache::builder()
-        .time_to_idle(std::time::Duration::from_secs(60 * 5))
+        .time_to_idle(std::time::Duration::from_secs(60 * 10))
         .build()
 });
 
-pub struct DefaultEmojiResolver;
+pub struct DefaultEmojiResolver<const RESOLVE_DISCORD: bool>;
 
 fn resize(image: &image::RgbaImage, size: u32) -> image::RgbaImage {
     let (mut width, mut height) = image.dimensions();
@@ -34,7 +34,7 @@ fn resize(image: &image::RgbaImage, size: u32) -> image::RgbaImage {
     image::imageops::resize(image, width, height, image::imageops::FilterType::Lanczos3)
 }
 
-impl DefaultEmojiResolver {
+impl<const RESOLVE_DISCORD: bool> DefaultEmojiResolver<RESOLVE_DISCORD> {
     fn resolve_emoji(emoji: &EmojiPath, size: u32) -> Option<image::RgbaImage> {
         match emoji {
             EmojiPath::Local(path) => {
@@ -71,7 +71,11 @@ impl DefaultEmojiResolver {
                     },
                 }
             }
-            EmojiPath::External(path) => {
+            EmojiPath::External { path, discord } => {
+                if *discord && !RESOLVE_DISCORD {
+                    return None;
+                }
+
                 EXTERNAL_CACHE.get_with_by_ref(path, || match CLIENT.get(path).send() {
                     Ok(response) => match response.bytes() {
                         Ok(bytes) => match image::load_from_memory(&bytes) {
@@ -91,7 +95,7 @@ impl DefaultEmojiResolver {
     }
 }
 
-impl EmojiResolver for DefaultEmojiResolver {
+impl<const RESOLVE_DISCORD: bool> EmojiResolver for DefaultEmojiResolver<RESOLVE_DISCORD> {
     fn resolve(&mut self, emojis: &Vec<UnresolvedEmoji>) -> Vec<ResolvedEmoji> {
         emojis
             .par_iter()

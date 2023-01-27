@@ -131,8 +131,8 @@ impl<'a> TextDrawer<'a> {
     ) {
         let (text, emojis) = crate::emoji::parse::parse_out_emojis(
             text,
-            font.emoji_options.allow_shortcodes,
-            font.emoji_options.allow_discord,
+            font.emoji_options.parse_shortcodes,
+            font.emoji_options.parse_discord_emojis,
         );
 
         let v_metrics = font.main.v_metrics(scale);
