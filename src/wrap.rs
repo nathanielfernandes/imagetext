@@ -1,5 +1,4 @@
-use crate::{measure::text_size, superfont::SuperFont};
-use unicode_segmentation::UnicodeSegmentation;
+use crate::{emoji::parse::parse_text_tokens, superfont::SuperFont};
 
 #[derive(Debug, Clone, Copy)]
 pub enum WrapStyle {
@@ -126,9 +125,10 @@ pub fn text_wrap(
                 .split_whitespace()
                 .wrap_lines(width, font, scale, false, size_fn)
             {
-                let w = text_size(scale, font, &line).0;
+                let w = (size_fn)(scale, font, &line).0;
                 if w > width {
-                    UnicodeSegmentation::graphemes(line.as_str(), true)
+                    parse_text_tokens(&line)
+                        .iter()
                         .wrap_lines(width, font, scale, true, size_fn)
                         .for_each(|l| result.push(l));
                 } else {
@@ -138,7 +138,8 @@ pub fn text_wrap(
 
             // final pass to clean up any character broken lines
             result
-                .iter()
+                .join(" ")
+                .split_whitespace()
                 .wrap_lines(width, font, scale, false, size_fn)
                 .collect::<Vec<String>>()
         }

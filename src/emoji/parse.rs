@@ -75,6 +75,16 @@ static EMOJI_RE: Lazy<Regex> = Lazy::new(|| {
     .expect("Failed to compile emoji regex")
 });
 
+static TEXT_TOKEN_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(&format!(
+        "{}|{}|{}|.",
+        EMOJI_UNICODE_RE_STR.as_str(),
+        EMOJI_SHORT_CODES_RE_STR.as_str(),
+        r"<a?:[a-zA-Z0-9_]{2,32}:[0-9]{17,22}>"
+    ))
+    .expect("Failed to compile emoji regex")
+});
+
 pub(crate) const PLACEHOLDER: char = '😀';
 
 pub(crate) fn parse_out_emojis(
@@ -123,6 +133,16 @@ pub(crate) fn parse_out_emojis(
         .to_string();
 
     (s.replace("\u{fe0f}", ""), emojis)
+}
+
+pub(crate) fn parse_text_tokens<'t>(text: &'t str) -> Vec<&'t str> {
+    let mut tokens = Vec::with_capacity(text.len());
+    for caps in TEXT_TOKEN_RE.captures_iter(text) {
+        if let Some(cap) = caps.get(0) {
+            tokens.push(cap.as_str());
+        }
+    }
+    tokens
 }
 
 #[test]
