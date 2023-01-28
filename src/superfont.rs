@@ -1,10 +1,14 @@
 use std::sync::Arc;
 
+use crate::text::{
+    layout::SingleLineLayoutIter,
+    parse::{EmojiType, Token, PLACEHOLDER_EMOJI},
+};
+
 pub struct SuperFont<'f> {
     pub(crate) main: rusttype::Font<'f>,
     pub(crate) fallbacks: Arc<Vec<rusttype::Font<'f>>>,
 
-    #[cfg(feature = "emoji")]
     pub emoji_options: crate::emoji::EmojiOptions,
 }
 
@@ -13,7 +17,6 @@ impl<'f> SuperFont<'f> {
         Self {
             main: font,
             fallbacks: Arc::new(fallbacks),
-            #[cfg(feature = "emoji")]
             emoji_options: crate::emoji::EmojiOptions::default(),
         }
     }
@@ -26,7 +29,6 @@ impl<'f> SuperFont<'f> {
         &self.fallbacks
     }
 
-    #[cfg(feature = "emoji")]
     pub fn with_emoji_options(
         font: rusttype::Font<'f>,
         fallbacks: Vec<rusttype::Font<'f>>,
@@ -109,7 +111,7 @@ pub struct SuperEmojiLayoutIter<'a, 'font, 's> {
     font: &'a rusttype::Font<'font>,
     fallbacks: &'a [rusttype::Font<'font>],
     chars: core::str::Chars<'s>,
-    emojis: &'s [crate::emoji::source::EmojiType],
+    emojis: &'s [EmojiType],
     emoji_index: usize,
     emoji_scale: rusttype::Scale,
     caret: f32,
@@ -120,10 +122,7 @@ pub struct SuperEmojiLayoutIter<'a, 'font, 's> {
 
 #[cfg(feature = "emoji")]
 impl<'a, 'font, 's> Iterator for SuperEmojiLayoutIter<'a, 'font, 's> {
-    type Item = (
-        rusttype::PositionedGlyph<'font>,
-        Option<&'s crate::emoji::source::EmojiType>,
-    );
+    type Item = (rusttype::PositionedGlyph<'font>, Option<&'s EmojiType>);
 
     fn next(&mut self) -> Option<Self::Item> {
         self.chars.next().map(|c| {
@@ -156,9 +155,9 @@ impl<'a, 'font, 's> Iterator for SuperEmojiLayoutIter<'a, 'font, 's> {
                 }
 
                 // If we get here, we didn't find a fallback font that had the glyph.
-                if c == crate::emoji::parse::PLACEHOLDER {
+                if c == PLACEHOLDER_EMOJI {
                     if let Some(emoji) = self.emojis.get(self.emoji_index) {
-                        let g = crate::emoji::EMOJI_FONT.glyph(crate::emoji::parse::PLACEHOLDER);
+                        let g = crate::emoji::EMOJI_FONT.glyph(PLACEHOLDER_EMOJI);
                         let g = g.scaled(self.emoji_scale);
                         let id = g.id();
 
@@ -218,11 +217,20 @@ impl<'f> SuperFont<'f> {
         }
     }
 
+    pub fn single_line_layout<'iter, 't, T: Iterator<Item = &'t Token>>(
+        &'iter self,
+        tokens: T,
+        scale: rusttype::Scale,
+        start: rusttype::Point<f32>,
+    ) -> SingleLineLayoutIter<'iter, 'f, 't, T> {
+        SingleLineLayoutIter::new(self, tokens, scale, start)
+    }
+
     #[cfg(feature = "emoji")]
     pub fn layout_with_emojis<'a, 's>(
         &'a self,
         text: &'s str,
-        emojis: &'s [crate::emoji::source::EmojiType],
+        emojis: &'s [EmojiType],
         emoji_scale: f32,
         scale: rusttype::Scale,
         start: rusttype::Point<f32>,

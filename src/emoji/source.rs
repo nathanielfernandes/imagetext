@@ -1,10 +1,6 @@
 use image::RgbaImage;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum EmojiType {
-    Regular(&'static emojis::Emoji),
-    Discord(u64),
-}
+use crate::text::parse::EmojiType;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum EmojiPath {
@@ -144,7 +140,7 @@ pub fn emoji_src() {
     assert_eq!(
         src.build_path(&emoji, false),
         EmojiPath::External {
-            path: "https://emojicdn.elk.sh/😀?style=twemoji".to_string(),
+            path: "https://emojicdn.elk.sh/😀?style=twitter".to_string(),
             discord: false
         }
     );

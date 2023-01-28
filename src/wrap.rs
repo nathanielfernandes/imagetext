@@ -127,16 +127,16 @@ pub fn text_wrap(
             {
                 let w = (size_fn)(scale, font, &line).0;
                 if w > width {
-                    #[cfg(not(feature = "emoji"))]
+                    // #[cfg(not(feature = "emoji"))]
                     unicode_segmentation::UnicodeSegmentation::graphemes(line.as_str(), true)
                         .wrap_lines(width, font, scale, true, size_fn)
                         .for_each(|l| result.push(l));
 
-                    #[cfg(feature = "emoji")]
-                    crate::emoji::parse::parse_text_tokens(&line)
-                        .iter()
-                        .wrap_lines(width, font, scale, true, size_fn)
-                        .for_each(|l| result.push(l));
+                    // #[cfg(feature = "emoji")]
+                    // crate::emoji::parse::parse_text_tokens(&line)
+                    //     .iter()
+                    //     .wrap_lines(width, font, scale, true, size_fn)
+                    //     .for_each(|l| result.push(l));
                 } else {
                     result.push(line);
                 }

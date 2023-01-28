@@ -1,8 +1,9 @@
 use once_cell::sync::Lazy;
 
-use self::source::{EmojiPath, EmojiSource, EmojiType};
+use crate::text::parse::EmojiType;
 
-pub mod parse;
+use self::source::{EmojiPath, EmojiSource};
+
 pub mod source;
 
 #[cfg(feature = "default-resolver")]

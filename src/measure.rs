@@ -31,46 +31,46 @@ pub fn text_size_multiline(
     )
 }
 
-#[cfg(feature = "emoji")]
-pub fn text_size_with_emojis(scale: rusttype::Scale, font: &SuperFont, text: &str) -> (i32, i32) {
-    let (mut w, mut h) = (0, 0);
-    let (text, emojis) = crate::emoji::parse::parse_out_emojis(
-        text,
-        font.emoji_options.parse_shortcodes,
-        font.emoji_options.parse_discord_emojis,
-    );
+// #[cfg(feature = "emoji")]
+// pub fn text_size_with_emojis(scale: rusttype::Scale, font: &SuperFont, text: &str) -> (i32, i32) {
+//     let (mut w, mut h) = (0, 0);
+//     let (text, emojis) = crate::emoji::parse::parse_out_emojis(
+//         text,
+//         font.emoji_options.parse_shortcodes,
+//         font.emoji_options.parse_discord_emojis,
+//     );
 
-    for g in font.layout_with_emojis(
-        &text,
-        &emojis,
-        font.emoji_options.scale,
-        scale,
-        rusttype::point(0.0, 0.0),
-    ) {
-        if let Some(bb) = g.0.pixel_bounding_box() {
-            w = std::cmp::max(w, bb.max.x);
-            h = std::cmp::max(h, bb.max.y);
-        }
-    }
-    (w, h)
-}
+//     for g in font.layout_with_emojis(
+//         &text,
+//         &emojis,
+//         font.emoji_options.scale,
+//         scale,
+//         rusttype::point(0.0, 0.0),
+//     ) {
+//         if let Some(bb) = g.0.pixel_bounding_box() {
+//             w = std::cmp::max(w, bb.max.x);
+//             h = std::cmp::max(h, bb.max.y);
+//         }
+//     }
+//     (w, h)
+// }
 
-#[cfg(feature = "emoji")]
-pub fn text_size_multiline_with_emojis(
-    lines: &Vec<String>,
-    font: &SuperFont,
-    scale: rusttype::Scale,
-    line_spacing: f32,
-) -> (i32, i32) {
-    let mut width = 0;
+// #[cfg(feature = "emoji")]
+// pub fn text_size_multiline_with_emojis(
+//     lines: &Vec<String>,
+//     font: &SuperFont,
+//     scale: rusttype::Scale,
+//     line_spacing: f32,
+// ) -> (i32, i32) {
+//     let mut width = 0;
 
-    for line in lines {
-        width = width.max(text_size_with_emojis(scale, font, line).0);
-    }
+//     for line in lines {
+//         width = width.max(text_size_with_emojis(scale, font, line).0);
+//     }
 
-    (
-        width,
-        ((lines.len() as f32 * scale.y * line_spacing) - (line_spacing - 1.0) * scale.y).round()
-            as i32,
-    )
-}
+//     (
+//         width,
+//         ((lines.len() as f32 * scale.y * line_spacing) - (line_spacing - 1.0) * scale.y).round()
+//             as i32,
+//     )
+// }

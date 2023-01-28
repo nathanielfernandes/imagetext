@@ -1,7 +1,9 @@
 pub mod drawing;
+pub mod layout;
 pub mod measure;
 pub mod outliner;
 pub mod superfont;
+pub mod text;
 pub mod wrap;
 
 pub mod prelude {
