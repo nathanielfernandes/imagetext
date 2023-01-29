@@ -1,9 +1,9 @@
 use once_cell::sync::Lazy;
-use regex::{Captures, Regex};
+use regex::Regex;
 
 use super::source::EmojiType;
 
-pub(crate) static EMOJIS: Lazy<Vec<&'static emojis::Emoji>> = Lazy::new(|| {
+static EMOJIS: Lazy<Vec<&'static emojis::Emoji>> = Lazy::new(|| {
     let mut emojis = emojis::iter().collect::<Vec<_>>();
     let mut emojis_tones = Vec::new();
     for emoji in emojis.iter() {
@@ -31,7 +31,6 @@ pub(crate) static EMOJIS: Lazy<Vec<&'static emojis::Emoji>> = Lazy::new(|| {
 
     emojis
 });
-
 static EMOJI_UNICODE_RE_STR: Lazy<String> = Lazy::new(|| {
     let mut emojis = EMOJIS
         .iter()
@@ -41,10 +40,6 @@ static EMOJI_UNICODE_RE_STR: Lazy<String> = Lazy::new(|| {
     emojis.sort_by(|a, b| b.len().cmp(&a.len()));
     emojis.join("|")
 });
-
-static EMOJI_UNICODE_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(&EMOJI_UNICODE_RE_STR).expect("Failed to compile emoji regex"));
-
 static EMOJI_SHORT_CODES_RE_STR: Lazy<String> = Lazy::new(|| {
     let mut emojis = EMOJIS
         .iter()
@@ -55,6 +50,18 @@ static EMOJI_SHORT_CODES_RE_STR: Lazy<String> = Lazy::new(|| {
     emojis.sort_by(|a, b| b.len().cmp(&a.len()));
     emojis.join("|")
 });
+static DISCORD_EMOJI_RE_STR: &'static str = r"<a?:[a-zA-Z0-9_]{2, 32}:[0-9]{17,22}>";
+static EMOJI_RE_STR: Lazy<String> = Lazy::new(|| {
+    format!(
+        "{}|{}|{}",
+        EMOJI_UNICODE_RE_STR.as_str(),
+        EMOJI_SHORT_CODES_RE_STR.as_str(),
+        DISCORD_EMOJI_RE_STR
+    )
+});
+
+static EMOJI_UNICODE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(&EMOJI_UNICODE_RE_STR).expect("Failed to compile emoji regex"));
 
 static EMOJI_SHORT_CODES_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(&EMOJI_SHORT_CODES_RE_STR).expect("Failed to compile emoji shortcode regex")
@@ -65,84 +72,110 @@ static DISCORD_EMOJI_RE: Lazy<Regex> = Lazy::new(|| {
         .expect("Failed to compile discord emoji regex")
 });
 
-static EMOJI_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(&format!(
-        "{}|{}|{}",
-        EMOJI_UNICODE_RE_STR.as_str(),
-        EMOJI_SHORT_CODES_RE_STR.as_str(),
-        r"<a?:[a-zA-Z0-9_]{2,32}:[0-9]{17,22}>"
-    ))
-    .expect("Failed to compile emoji regex")
-});
-
 static TEXT_TOKEN_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(&format!(
-        "{}|{}|{}|.",
-        EMOJI_UNICODE_RE_STR.as_str(),
-        EMOJI_SHORT_CODES_RE_STR.as_str(),
-        r"<a?:[a-zA-Z0-9_]{2,32}:[0-9]{17,22}>"
-    ))
-    .expect("Failed to compile emoji regex")
+    Regex::new(&format!(r"{}|[\s\S]", EMOJI_RE_STR.as_str(),))
+        .expect("Failed to compile emoji regex")
 });
 
-pub(crate) const PLACEHOLDER: char = '😀';
+pub(crate) const PLACEHOLDER_EMOJI: char = '😀';
 
-pub(crate) fn parse_out_emojis(
-    text: &str,
-    shortcodes: bool,
-    discord: bool,
-) -> (String, Vec<EmojiType>) {
-    let mut emojis: Vec<EmojiType> = Vec::new();
-
-    let s = EMOJI_RE
-        .replace_all(text, |caps: &Captures| {
-            if let Some(m) = caps.get(0) {
-                let s = m.as_str();
-
-                if EMOJI_UNICODE_RE.is_match(s) {
-                    if let Some(e) = emojis::get(s) {
-                        emojis.push(EmojiType::Regular(e));
-                        return PLACEHOLDER.to_string();
-                    }
-                }
-
-                if discord {
-                    if let Some(caps) = DISCORD_EMOJI_RE.captures(s) {
-                        if let Some(m) = caps.get(1) {
-                            let s = m.as_str();
-                            if let Ok(id) = s.parse::<u64>() {
-                                emojis.push(EmojiType::Discord(id));
-                                return PLACEHOLDER.to_string();
-                            }
-                        }
-                    }
-                }
-
-                if shortcodes && EMOJI_SHORT_CODES_RE.is_match(s) {
-                    let s = s.replace(":", "");
-                    if let Some(e) = emojis::get_by_shortcode(&s) {
-                        emojis.push(EmojiType::Regular(e));
-                        return PLACEHOLDER.to_string();
-                    }
-                }
-
-                return s.to_string();
-            }
-            "".to_string()
-        })
-        .to_string();
-
-    (s.replace("\u{fe0f}", ""), emojis)
-}
-
-pub(crate) fn parse_text_tokens<'t>(text: &'t str) -> Vec<&'t str> {
-    let mut tokens = Vec::with_capacity(text.len());
-    for caps in TEXT_TOKEN_RE.captures_iter(text) {
-        if let Some(cap) = caps.get(0) {
-            tokens.push(cap.as_str());
+fn parse_unicode_emoji(s: &str) -> Option<EmojiType> {
+    if EMOJI_UNICODE_RE.is_match(s) {
+        if let Some(e) = emojis::get(s) {
+            return Some(EmojiType::Regular(e));
         }
     }
-    tokens
+    None
+}
+
+fn parse_discord_emoji(s: &str) -> Option<EmojiType> {
+    if let Some(caps) = DISCORD_EMOJI_RE.captures(s) {
+        if let Some(m) = caps.get(1) {
+            if let Ok(id) = m.as_str().parse::<u64>() {
+                return Some(EmojiType::Discord(id));
+            }
+        }
+    }
+    None
+}
+
+fn parse_shortcode_emoji(s: &str) -> Option<EmojiType> {
+    if EMOJI_SHORT_CODES_RE.is_match(s) {
+        if let Some(e) = emojis::get_by_shortcode(&s.replace(":", "")) {
+            return Some(EmojiType::Regular(e));
+        }
+    }
+    None
+}
+
+pub fn parse_out_emojis<'t>(
+    text: &'t str,
+    parse_shortcodes: bool,
+    parse_discord_emojis: bool,
+) -> (String, Vec<EmojiType>) {
+    let mut parsed = String::with_capacity(text.len());
+    let mut emojis = Vec::new();
+
+    for caps in TEXT_TOKEN_RE.captures_iter(text) {
+        if let Some(cap) = caps.get(0) {
+            let s = cap.as_str();
+
+            if let Some(emoji) = parse_unicode_emoji(s) {
+                emojis.push(emoji);
+                parsed.push(PLACEHOLDER_EMOJI);
+                continue;
+            }
+
+            if parse_discord_emojis {
+                if let Some(emoji) = parse_discord_emoji(s) {
+                    emojis.push(emoji);
+                    parsed.push(PLACEHOLDER_EMOJI);
+                    continue;
+                }
+            }
+
+            if parse_shortcodes {
+                if let Some(emoji) = parse_shortcode_emoji(s) {
+                    emojis.push(emoji);
+                    parsed.push(PLACEHOLDER_EMOJI);
+                    continue;
+                }
+            }
+
+            parsed.push_str(s);
+        }
+    }
+
+    (parsed, emojis)
+}
+
+pub fn clean_emojis(text: &str) -> String {
+    let mut parsed = String::with_capacity(text.len());
+
+    for caps in TEXT_TOKEN_RE.captures_iter(text) {
+        if let Some(cap) = caps.get(0) {
+            let s = cap.as_str();
+
+            if let Some(_) = parse_unicode_emoji(s) {
+                parsed.push(PLACEHOLDER_EMOJI);
+                continue;
+            }
+
+            if let Some(_) = parse_discord_emoji(s) {
+                parsed.push(PLACEHOLDER_EMOJI);
+                continue;
+            }
+
+            if let Some(_) = parse_shortcode_emoji(s) {
+                parsed.push(PLACEHOLDER_EMOJI);
+                continue;
+            }
+
+            parsed.push_str(s);
+        }
+    }
+
+    parsed
 }
 
 #[test]

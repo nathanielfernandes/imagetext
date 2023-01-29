@@ -15,7 +15,7 @@ pub struct LineBreaker<'a, W> {
     current: Option<String>,
     chars_mode: bool,
 
-    size_fn: fn(rusttype::Scale, &SuperFont, &str) -> (i32, i32),
+    width_fn: fn(rusttype::Scale, &SuperFont, &str) -> i32,
 }
 
 impl<'a, W> LineBreaker<'a, W> {
@@ -25,7 +25,7 @@ impl<'a, W> LineBreaker<'a, W> {
         font: &'a SuperFont<'a>,
         scale: rusttype::Scale,
         chars_mode: bool,
-        size_fn: fn(rusttype::Scale, &SuperFont, &str) -> (i32, i32),
+        width_fn: fn(rusttype::Scale, &SuperFont, &str) -> i32,
     ) -> Self
     where
         W: Iterator<Item = S>,
@@ -39,7 +39,7 @@ impl<'a, W> LineBreaker<'a, W> {
                 scale,
                 current: None,
                 chars_mode,
-                size_fn,
+                width_fn,
             }
         }
     }
@@ -64,7 +64,7 @@ where
             }
             new_line.push_str(word);
 
-            let w = (self.size_fn)(self.scale, &self.font, &new_line).0;
+            let w = (self.width_fn)(self.scale, &self.font, &new_line);
 
             if w > self.width {
                 if !line.is_empty() {
@@ -94,7 +94,7 @@ pub trait Wrappable: Iterator {
         font: &'a SuperFont<'a>,
         scale: rusttype::Scale,
         chars_mode: bool,
-        size_fn: fn(rusttype::Scale, &SuperFont, &str) -> (i32, i32),
+        size_fn: fn(rusttype::Scale, &SuperFont, &str) -> i32,
     ) -> LineBreaker<'a, Self>
     where
         Self: Sized,
@@ -112,30 +112,23 @@ pub fn text_wrap(
     font: &SuperFont,
     scale: rusttype::Scale,
     wrap_style: WrapStyle,
-    size_fn: fn(rusttype::Scale, &SuperFont, &str) -> (i32, i32),
+    width_fn: fn(rusttype::Scale, &SuperFont, &str) -> i32,
 ) -> Vec<String> {
     match wrap_style {
         WrapStyle::Word => text
             .split_whitespace()
-            .wrap_lines(width, font, scale, false, size_fn)
+            .wrap_lines(width, font, scale, false, width_fn)
             .collect(),
         WrapStyle::Character => {
             let mut result = Vec::new();
             for line in text
                 .split_whitespace()
-                .wrap_lines(width, font, scale, false, size_fn)
+                .wrap_lines(width, font, scale, false, width_fn)
             {
-                let w = (size_fn)(scale, font, &line).0;
+                let w = (width_fn)(scale, font, &line);
                 if w > width {
-                    #[cfg(not(feature = "emoji"))]
                     unicode_segmentation::UnicodeSegmentation::graphemes(line.as_str(), true)
-                        .wrap_lines(width, font, scale, true, size_fn)
-                        .for_each(|l| result.push(l));
-
-                    #[cfg(feature = "emoji")]
-                    crate::emoji::parse::parse_text_tokens(&line)
-                        .iter()
-                        .wrap_lines(width, font, scale, true, size_fn)
+                        .wrap_lines(width, font, scale, true, width_fn)
                         .for_each(|l| result.push(l));
                 } else {
                     result.push(line);
@@ -146,7 +139,7 @@ pub fn text_wrap(
             result
                 .join(" ")
                 .split_whitespace()
-                .wrap_lines(width, font, scale, false, size_fn)
+                .wrap_lines(width, font, scale, false, width_fn)
                 .collect::<Vec<String>>()
         }
     }

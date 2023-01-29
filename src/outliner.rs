@@ -2,9 +2,6 @@ use tiny_skia::PathBuilder;
 
 use crate::{measure::text_size, superfont::SuperFont};
 
-#[cfg(feature = "emoji")]
-use crate::measure::text_size_with_emojis;
-
 #[derive(Debug, Clone, Copy)]
 pub enum TextAlign {
     Left,
@@ -121,25 +118,21 @@ impl<'a> TextDrawer<'a> {
         self.emojis.drain(..).collect()
     }
 
-    pub fn draw_text_with_emojis(
+    pub fn draw_text_with_emojis<'s>(
         &mut self,
-        text: &str,
+        text: &'s str, // assumes that text is parsed
+        emojis: &'s [crate::emoji::source::EmojiType],
+        emoji_idx: &mut usize,
         x: f32,
         y: f32,
         font: &'a SuperFont,
         scale: rusttype::Scale,
     ) {
-        let (text, emojis) = crate::emoji::parse::parse_out_emojis(
-            text,
-            font.emoji_options.parse_shortcodes,
-            font.emoji_options.parse_discord_emojis,
-        );
-
         let v_metrics = font.main.v_metrics(scale);
         for (g, emoji) in font.layout_with_emojis(
-            &text,
-            &emojis,
-            font.emoji_options.scale,
+            text,
+            emojis,
+            emoji_idx,
             scale,
             rusttype::point(x, y + v_metrics.ascent),
         ) {
@@ -170,9 +163,11 @@ impl<'a> TextDrawer<'a> {
         }
     }
 
-    pub fn draw_text_anchored_with_emojis(
+    pub fn draw_text_anchored_with_emojis<'s>(
         &mut self,
-        text: &str,
+        text: &'s str, // assumes that text is parsed
+        emojis: &'s [crate::emoji::source::EmojiType],
+        emoji_idx: &mut usize,
         x: f32,
         y: f32,
         ax: f32,
@@ -180,16 +175,18 @@ impl<'a> TextDrawer<'a> {
         font: &'a SuperFont,
         scale: rusttype::Scale,
     ) {
-        let (w, h) = text_size_with_emojis(scale, font, text);
+        let (w, h) = crate::measure::parsed_text_size_with_emojis(scale, font, text);
         let x = x - w as f32 * ax;
         let y = y - h as f32 * ay;
 
-        self.draw_text_with_emojis(text, x, y, font, scale);
+        self.draw_text_with_emojis(text, emojis, emoji_idx, x, y, font, scale);
     }
 
-    pub fn draw_text_multiline_with_emojis(
+    pub fn draw_text_multiline_with_emojis<'s>(
         &mut self,
-        lines: &Vec<String>,
+        lines: &'s Vec<String>,
+        emojis: &'s [crate::emoji::source::EmojiType],
+        emoji_idx: &mut usize,
         x: f32,
         y: f32,
         ax: f32,
@@ -218,7 +215,9 @@ impl<'a> TextDrawer<'a> {
         };
 
         for line in lines {
-            self.draw_text_anchored_with_emojis(line, x, y, ax, 0.0, font, scale);
+            self.draw_text_anchored_with_emojis(
+                line, emojis, emoji_idx, x, y, ax, 0.0, font, scale,
+            );
             y += scale.y * line_spacing;
         }
     }

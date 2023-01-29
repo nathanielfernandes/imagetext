@@ -1,4 +1,5 @@
 pub mod drawing;
+pub mod layout;
 pub mod measure;
 pub mod outliner;
 pub mod superfont;
