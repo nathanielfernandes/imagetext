@@ -67,7 +67,7 @@ impl<'iter, 'font, 'text> Iterator for LayoutIter<'iter, 'font, 'text> {
                     let g = font.glyph(c);
                     let id = g.id();
 
-                    if id.0 != 0 {
+                    if id.0 == 0 {
                         continue;
                     }
 
@@ -162,7 +162,7 @@ impl<'iter, 'font, 'text> Iterator for LayoutWithEmojisIter<'iter, 'font, 'text>
                     let g = font.glyph(c);
                     let id = g.id();
 
-                    if id.0 != 0 {
+                    if id.0 == 0 {
                         continue;
                     }
 
