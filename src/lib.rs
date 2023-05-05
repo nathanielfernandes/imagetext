@@ -23,6 +23,9 @@ pub mod prelude {
 
     #[cfg(feature = "default-resolver")]
     pub use crate::emoji::default_resolver::DefaultEmojiResolver;
+
+    #[cfg(feature = "fontdb")]
+    pub use crate::fontdb::*;
 }
 
 #[cfg(feature = "emoji")]
