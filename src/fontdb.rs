@@ -16,23 +16,20 @@ static DEFAULT_EMOJI_OPTIONS: Lazy<RwLock<crate::prelude::EmojiOptions>> =
 pub struct FontDB;
 
 impl FontDB {
-    pub fn insert<S: Into<String>>(name: S, font: Font<'static>) -> Result<(), String> {
+    pub fn insert<S: Into<String>>(name: S, font: Font<'static>) -> Result<(), &'static str> {
         match FONT_DB.write() {
             Ok(mut db) => {
                 db.insert(name.into(), font);
                 Ok(())
             }
-            Err(_) => return Err("Failed to write to font database".to_string()),
+            Err(_) => return Err("Failed to write to font database"),
         }
     }
 
-    pub fn load_font_data<S: Into<String>>(name: S, data: Vec<u8>) -> Result<(), String> {
+    pub fn load_font_data<S: Into<String>>(name: S, data: Vec<u8>) -> Result<(), &'static str> {
         match Font::try_from_vec(data) {
-            Some(font) => match Self::insert(name, font) {
-                Ok(_) => Ok(()),
-                Err(e) => Err(e),
-            },
-            None => Err("Failed to load font".to_string()),
+            Some(font) => Self::insert(name, font),
+            None => Err("Failed to load font"),
         }
     }
 
@@ -43,7 +40,7 @@ impl FontDB {
         match std::fs::read(path) {
             Ok(data) => match Self::load_font_data(name, data) {
                 Ok(_) => Ok(()),
-                Err(e) => Err(e),
+                Err(e) => Err(e.to_string()),
             },
             Err(e) => Err(format!("Failed to read font file: {}", e)),
         }
@@ -157,13 +154,13 @@ impl FontDB {
         Self::superfont(&query.split_whitespace().collect::<Vec<&str>>())
     }
 
-    pub fn remove(name: &str) -> Result<(), String> {
+    pub fn remove(name: &str) -> Result<(), &'static str> {
         match FONT_DB.write() {
             Ok(mut db) => {
                 db.remove(name);
                 Ok(())
             }
-            Err(_) => Err("Failed to write to font database".to_string()),
+            Err(_) => Err("Failed to write to font database"),
         }
     }
 

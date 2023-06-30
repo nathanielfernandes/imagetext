@@ -12,7 +12,7 @@ crosscompile = ["openssl/vendored"]
 fontdb = ["log", "once_cell", "fxhash"]
 
 [dependencies]
-tiny-skia = "0.9.0"
+tiny-skia = "0.11.1"
 rusttype = "0.9.3"
 image = "0.24.5"
 unicode-segmentation = "1.10.0"
