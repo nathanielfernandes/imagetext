@@ -16,6 +16,10 @@ static DEFAULT_EMOJI_OPTIONS: Lazy<RwLock<crate::prelude::EmojiOptions>> =
 pub struct FontDB;
 
 impl FontDB {
+    pub fn inner() -> &'static RwLock<FxHashMap<String, Font<'static>>> {
+        &FONT_DB
+    }
+
     pub fn insert<S: Into<String>>(name: S, font: Font<'static>) -> Result<(), &'static str> {
         match FONT_DB.write() {
             Ok(mut db) => {
