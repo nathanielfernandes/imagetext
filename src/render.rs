@@ -7,7 +7,7 @@ pub(crate) fn with_pixmap(
     image: &mut image::RgbaImage,
     f: impl FnOnce(&mut PixmapMut),
 ) -> Result<(), &'static str> {
-    let Some(mut pixmap) = pixmap_mut(image)  else {
+    let Some(mut pixmap) = pixmap_mut(image) else {
         return Err("Could not create pixmap");
     };
 
@@ -123,6 +123,10 @@ pub(crate) fn render_text_emoji_fn<'a, R: EmojiResolver>(
         let emojis = resolve_emoji_ims(&mut td, &emojis, &font, &mut emoji_resolver);
 
         if pb.is_empty() {
+            // if there is no text, just render the emojis
+            for (im, (x, y)) in emojis {
+                image::imageops::overlay(image, &im, x, y);
+            }
             return Ok(());
         }
 
