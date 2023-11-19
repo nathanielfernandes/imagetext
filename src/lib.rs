@@ -2,10 +2,12 @@ pub mod drawing;
 pub mod layout;
 pub mod measure;
 pub mod outliner;
+mod render;
 pub mod superfont;
 pub mod wrap;
 
 pub mod prelude {
+    pub use crate::drawing::outline::*;
     pub use crate::drawing::paint::*;
     pub use crate::drawing::text::*;
     pub use crate::drawing::utils::*;
@@ -23,6 +25,9 @@ pub mod prelude {
 
     #[cfg(feature = "default-resolver")]
     pub use crate::emoji::default_resolver::DefaultEmojiResolver;
+
+    #[cfg(feature = "fontdb")]
+    pub use crate::fontdb::*;
 }
 
 #[cfg(feature = "emoji")]

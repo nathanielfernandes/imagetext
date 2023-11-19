@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+#[derive(Clone)]
 pub struct SuperFont<'f> {
     pub(crate) main: rusttype::Font<'f>,
     pub(crate) fallbacks: Arc<Vec<rusttype::Font<'f>>>,

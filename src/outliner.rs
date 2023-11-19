@@ -22,18 +22,12 @@ pub struct PositionedEmoji<'a> {
 pub struct TextDrawer<'a> {
     pub pb: &'a mut PathBuilder,
     offset: rusttype::Point<f32>,
-
-    #[cfg(feature = "emoji")]
-    emojis: Vec<PositionedEmoji<'a>>,
 }
 impl<'a> TextDrawer<'a> {
     pub fn new(pb: &'a mut PathBuilder) -> Self {
         Self {
             pb,
             offset: rusttype::Point { x: 0.0, y: 0.0 },
-
-            #[cfg(feature = "emoji")]
-            emojis: Vec::new(),
         }
     }
 
@@ -114,19 +108,17 @@ impl<'a> TextDrawer<'a> {
 }
 #[cfg(feature = "emoji")]
 impl<'a> TextDrawer<'a> {
-    pub fn emojis(&mut self) -> Vec<PositionedEmoji<'a>> {
-        self.emojis.drain(..).collect()
-    }
-
-    pub fn draw_text_with_emojis<'s>(
+    pub fn draw_text_with_emojis<'f>(
         &mut self,
-        text: &'s str, // assumes that text is parsed
-        emojis: &'s [crate::emoji::source::EmojiType],
+        text: &str, // assumes that text is parsed
+        emojis: &[crate::emoji::source::EmojiType],
         emoji_idx: &mut usize,
         x: f32,
         y: f32,
-        font: &'a SuperFont,
+        font: &'f SuperFont,
         scale: rusttype::Scale,
+
+        emoji_acc: &mut Vec<PositionedEmoji<'f>>,
     ) {
         let v_metrics = font.main.v_metrics(scale);
         for (g, emoji) in font.layout_with_emojis(
@@ -144,7 +136,7 @@ impl<'a> TextDrawer<'a> {
 
                         let position = (bb.min.x + w2, bb.min.y + w2);
 
-                        self.emojis.push(PositionedEmoji {
+                        emoji_acc.push(PositionedEmoji {
                             position: (
                                 position.0 as i64 + font.emoji_options.shift.0,
                                 position.1 as i64 + font.emoji_options.shift.1,
@@ -163,39 +155,43 @@ impl<'a> TextDrawer<'a> {
         }
     }
 
-    pub fn draw_text_anchored_with_emojis<'s>(
+    pub fn draw_text_anchored_with_emojis<'f>(
         &mut self,
-        text: &'s str, // assumes that text is parsed
-        emojis: &'s [crate::emoji::source::EmojiType],
+        text: &str, // assumes that text is parsed
+        emojis: &[crate::emoji::source::EmojiType],
         emoji_idx: &mut usize,
         x: f32,
         y: f32,
         ax: f32,
         ay: f32,
-        font: &'a SuperFont,
+        font: &'f SuperFont,
         scale: rusttype::Scale,
+
+        emoji_acc: &mut Vec<PositionedEmoji<'f>>,
     ) {
         let (w, h) = crate::measure::parsed_text_size_with_emojis(scale, font, text);
         let x = x - w as f32 * ax;
         let y = y - h as f32 * ay;
 
-        self.draw_text_with_emojis(text, emojis, emoji_idx, x, y, font, scale);
+        self.draw_text_with_emojis(text, emojis, emoji_idx, x, y, font, scale, emoji_acc);
     }
 
-    pub fn draw_text_multiline_with_emojis<'s>(
+    pub fn draw_text_multiline_with_emojis<'f>(
         &mut self,
-        lines: &'s Vec<String>,
-        emojis: &'s [crate::emoji::source::EmojiType],
+        lines: &Vec<String>,
+        emojis: &[crate::emoji::source::EmojiType],
         emoji_idx: &mut usize,
         x: f32,
         y: f32,
         ax: f32,
         ay: f32,
         width: f32,
-        font: &'a SuperFont,
+        font: &'f SuperFont,
         scale: rusttype::Scale,
         line_spacing: f32,
         align: TextAlign,
+
+        emoji_acc: &mut Vec<PositionedEmoji<'f>>,
     ) {
         let h = (lines.len() as f32 * (scale.y * line_spacing)) - (line_spacing - 1.0) * scale.y;
 
@@ -216,7 +212,7 @@ impl<'a> TextDrawer<'a> {
 
         for line in lines {
             self.draw_text_anchored_with_emojis(
-                line, emojis, emoji_idx, x, y, ax, 0.0, font, scale,
+                line, emojis, emoji_idx, x, y, ax, 0.0, font, scale, emoji_acc,
             );
             y += scale.y * line_spacing;
         }

@@ -12,25 +12,28 @@ crosscompile = ["openssl/vendored"]
 fontdb = ["log", "once_cell", "fxhash"]
 
 [dependencies]
-tiny-skia = "0.8.2"
+tiny-skia = "0.11.2"
 rusttype = "0.9.3"
 image = "0.24.5"
 unicode-segmentation = "1.10.0"
 
 # emoji deps
 once_cell = { version = "1.17.0", optional = true }
-emojis = { version = "0.5.2", optional = true }
+emojis = { version = "0.6.0", optional = true }
 regex = { version = "1.7.1", optional = true }
 fxhash = { version = "0.2.1", optional = true }
 
 # default emoji resolver deps
-moka = { version = "0.9.6", optional = true }
+moka = { version = "0.11.0", optional = true }
 reqwest = { version = "0.11.14", features = ["blocking"], optional = true }
 openssl = { version = "0.10.59", optional = true }
 rayon = { version = "1.6.1", optional = true }
 
 # fontdb deps
 log = { version = "0.4.17", optional = true }
+
+fontdue = { version = "0.7.3" }
+
 
 [dev-dependencies]
 imagetext = { path = ".", features = ["emoji", "default-resolver", "fontdb"] }
