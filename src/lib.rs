@@ -18,7 +18,9 @@ pub mod prelude {
     pub use crate::superfont::*;
 
     pub use rusttype::{Font, Scale};
-    pub use tiny_skia::{Color, GradientStop, LinearGradient, Paint, Pixmap, RadialGradient};
+    pub use tiny_skia::{
+        Color, GradientStop, LinearGradient, Paint, Pixmap, RadialGradient, Stroke,
+    };
 
     #[cfg(feature = "emoji")]
     pub use crate::emoji::{source::*, EmojiOptions};
