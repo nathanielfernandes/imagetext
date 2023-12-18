@@ -147,14 +147,14 @@ fn parse_discord_emoji(s: &str) -> Option<EmojiType> {
     None
 }
 
-#[inline(always)]
-fn parse_shortcode_emoji(s: &str) -> Option<EmojiType> {
-    if let Some(e) = EMOJI_SHORTCODE_MAP.get(s) {
-        return Some(EmojiType::Regular(e));
-    }
+// #[inline(always)]
+// fn parse_shortcode_emoji(s: &str) -> Option<EmojiType> {
+//     if let Some(e) = EMOJI_SHORTCODE_MAP.get(s) {
+//         return Some(EmojiType::Regular(e));
+//     }
 
-    None
-}
+//     None
+// }
 
 #[inline(always)]
 fn parse_emoji(s: &str) -> Option<EmojiType> {
