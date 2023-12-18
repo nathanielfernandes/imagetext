@@ -6,10 +6,11 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
-emoji = ["once_cell", "emojis", "regex", "fxhash"]
+default = ["emoji", "default-resolver", "fontdb"]
+emoji = ["once_cell", "emojis", "regex", "hashbrown"]
 default-resolver = ["emoji", "moka", "reqwest", "rayon"]
 crosscompile = ["openssl/vendored"]
-fontdb = ["log", "once_cell", "fxhash"]
+fontdb = ["log", "once_cell", "hashbrown"]
 
 [dependencies]
 tiny-skia = "0.11.2"
@@ -19,12 +20,12 @@ unicode-segmentation = "1.10.0"
 
 # emoji deps
 once_cell = { version = "1.17.0", optional = true }
-emojis = { version = "0.6.0", optional = true }
-regex = { version = "1.7.1", optional = true }
-fxhash = { version = "0.2.1", optional = true }
+emojis = { version = "0.6.1", optional = true }
+regex = { version = "1.10.2", optional = true }
+hashbrown = { version = "0.14.3", optional = true }
 
 # default emoji resolver deps
-moka = { version = "0.11.0", optional = true }
+moka = { version = "0.12.1", optional = true, features = ["sync"] }
 reqwest = { version = "0.11.14", features = ["blocking"], optional = true }
 openssl = { version = "0.10.59", optional = true }
 rayon = { version = "1.6.1", optional = true }
@@ -32,7 +33,7 @@ rayon = { version = "1.6.1", optional = true }
 # fontdb deps
 log = { version = "0.4.17", optional = true }
 
-fontdue = { version = "0.7.3" }
+fontdue = { version = "0.8.0" }
 
 
 [dev-dependencies]

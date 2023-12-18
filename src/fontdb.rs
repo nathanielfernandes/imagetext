@@ -1,13 +1,13 @@
 use std::sync::RwLock;
 
-use fxhash::FxHashMap;
+use hashbrown::HashMap;
 use once_cell::sync::Lazy;
 use rusttype::Font;
 
 use crate::prelude::SuperFont;
 
-static FONT_DB: Lazy<RwLock<FxHashMap<String, Font<'static>>>> =
-    Lazy::new(|| RwLock::new(FxHashMap::default()));
+static FONT_DB: Lazy<RwLock<HashMap<String, Font<'static>>>> =
+    Lazy::new(|| RwLock::new(HashMap::default()));
 
 #[cfg(feature = "emoji")]
 static DEFAULT_EMOJI_OPTIONS: Lazy<RwLock<crate::prelude::EmojiOptions>> =
@@ -16,7 +16,7 @@ static DEFAULT_EMOJI_OPTIONS: Lazy<RwLock<crate::prelude::EmojiOptions>> =
 pub struct FontDB;
 
 impl FontDB {
-    pub fn inner() -> &'static RwLock<FxHashMap<String, Font<'static>>> {
+    pub fn inner() -> &'static RwLock<HashMap<String, Font<'static>>> {
         &FONT_DB
     }
 

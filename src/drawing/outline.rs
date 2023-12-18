@@ -1,6 +1,6 @@
-use tiny_skia::{Paint, Stroke};
-
 use crate::prelude::BLACK;
+
+use tiny_skia::{Paint, Stroke};
 
 #[derive(Debug, Clone)]
 pub enum Outline<'a> {

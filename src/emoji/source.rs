@@ -2,7 +2,7 @@ use image::RgbaImage;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum EmojiType {
-    Regular(&'static emojis::Emoji),
+    Regular(&'static str),
     Discord(u64),
 }
 
@@ -85,10 +85,10 @@ impl EmojiSource {
         match emoji {
             EmojiType::Regular(e) => match self {
                 EmojiSource::Dir(path) => {
-                    EmojiPath::Local(format!("{}/{}", path, Self::emoji_file_name(e.as_str())))
+                    EmojiPath::Local(format!("{}/{}", path, Self::emoji_file_name(e)))
                 }
                 _ => EmojiPath::External {
-                    path: format!("{}/{}?style={}", Self::EMOJI_CDN, e.as_str(), self.style()),
+                    path: format!("{}/{}?style={}", Self::EMOJI_CDN, e, self.style()),
                     discord: false,
                 },
             },
@@ -124,7 +124,7 @@ pub trait EmojiResolver {
 #[test]
 pub fn emoji_src() {
     let src = EmojiSource::Dir(String::from("test"));
-    let emoji = EmojiType::Regular(emojis::get("😀").unwrap());
+    let emoji = EmojiType::Regular(emojis::get("😀").unwrap().as_str());
     assert_eq!(
         src.build_path(&emoji, false),
         EmojiPath::Local("test/1f600.png".to_string())
@@ -140,7 +140,7 @@ pub fn emoji_src() {
         }
     );
 
-    let emoji = EmojiType::Regular(emojis::get("😀").unwrap());
+    let emoji = EmojiType::Regular(emojis::get("😀").unwrap().as_str());
     assert_eq!(
         src.build_path(&emoji, false),
         EmojiPath::External {
@@ -150,7 +150,7 @@ pub fn emoji_src() {
     );
 
     let src = EmojiSource::Twitter;
-    let emoji = EmojiType::Regular(emojis::get("😀").unwrap());
+    let emoji = EmojiType::Regular(emojis::get("😀").unwrap().as_str());
     assert_eq!(
         src.build_path(&emoji, false),
         EmojiPath::External {

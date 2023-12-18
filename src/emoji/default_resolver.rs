@@ -1,4 +1,4 @@
-use fxhash::FxHashMap;
+use hashbrown::HashMap;
 use moka::sync::Cache;
 use once_cell::sync::Lazy;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
@@ -10,8 +10,8 @@ use super::{
 };
 
 static CLIENT: Lazy<reqwest::blocking::Client> = Lazy::new(|| reqwest::blocking::Client::new());
-static LOCAL_CACHE: Lazy<RwLock<FxHashMap<String, Option<image::RgbaImage>>>> =
-    Lazy::new(|| RwLock::new(FxHashMap::default()));
+static LOCAL_CACHE: Lazy<RwLock<HashMap<String, Option<image::RgbaImage>>>> =
+    Lazy::new(|| RwLock::new(HashMap::default()));
 static EXTERNAL_CACHE: Lazy<Cache<String, Option<image::RgbaImage>>> = Lazy::new(|| {
     Cache::builder()
         .time_to_idle(std::time::Duration::from_secs(60 * 10))
