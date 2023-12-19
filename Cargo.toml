@@ -9,7 +9,7 @@ edition = "2021"
 default = ["emoji", "default-resolver", "fontdb"]
 emoji = ["once_cell", "emojis", "regex", "hashbrown"]
 default-resolver = ["emoji", "moka", "reqwest", "rayon"]
-crosscompile = ["openssl/vendored"]
+vendored-openssl = ["openssl/vendored"]
 fontdb = ["log", "once_cell", "hashbrown"]
 
 [dependencies]
